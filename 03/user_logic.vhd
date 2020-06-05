@@ -29,8 +29,8 @@ architecture behav of user_logic is
         signal rx_register : std_logic_vector(N - 1 downto 0) := "01000010";
         type state is (Idle, Hello, Send_hello, Receiving_1, Temperature, Send_temp, Receiving_2, Bye, Send_bye, Receiving_3);
         signal current_state, next_state : state := Idle;
-        signal message_buff : string(1 to 100);
-        signal rx_message_buff : string(1 to 100);
+        signal message_buff : string(1 to 11);
+        signal rx_message_buff : string(1 to 11);
         signal received_data : STD_LOGIC_VECTOR(d_width-1 DOWNTO 0);	--data received
 
     begin
@@ -50,39 +50,43 @@ architecture behav of user_logic is
             case current_state is
                 when Idle =>
                     if rising_edge(clock) then
-                        if cnt > 100 then
+                        --if cnt > 100 then
                             next_state <= Hello;
-                        else 
-                            next_state <= Idle;
-                        end if;
+                       -- else 
+                          --  next_state <= Idle;
+                      --  end if;
                     end if;
                     
                 when Hello =>
                     if rising_edge(clock) then
-                        message_buff <= "olleH";
+                        message_buff <= "olleH      ";
                         message_len := 5;
                         next_state <= Send_hello;
                     end if;
                 when Send_hello =>
                     if rising_edge(clock) then
                         if message_len = 0 then
-                            if tx_busy = '0' then 
+                      --      if tx_busy = '0' then 
                                 tx_data <= "00000000";
                                 next_state <= Receiving_1;
-                            else 
-                            next_state <= Send_hello;
-                        end if;
-
-                        elsif tx_busy = '0' then
-                            
+                      --      else 
+                       --     next_state <= Send_hello;
+                        else
                             tx_data <= std_logic_vector(to_unsigned(character'pos(message_buff(message_len)),8));
                             tx_ena <= '1';
                             message_len := message_len - 1;
                             next_state <= Send_hello;
-                        else 
-                            tx_ena <= '0';
-                            next_state <= Send_hello;
                         end if;
+
+                      --  elsif tx_busy = '0' then                            
+                            -- tx_data <= std_logic_vector(to_unsigned(character'pos(message_buff(message_len)),8));
+                            -- tx_ena <= '1';
+                            -- message_len := message_len - 1;
+                            -- next_state <= Send_hello;
+                        -- else 
+                        --     tx_ena <= '0';
+                        --     next_state <= Send_hello;
+                        -- end if;
                     end if;
 
                 when Receiving_1 =>
@@ -138,7 +142,7 @@ architecture behav of user_logic is
 
                 when Bye =>
                     if rising_edge(clock) then
-                        message_buff <= "eyB";
+                        message_buff <= "eyB        ";
                         message_len := 3;
                         next_state <= Send_bye;
                     end if;
