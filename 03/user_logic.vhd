@@ -31,10 +31,11 @@ architecture behav of user_logic is
         signal current_state, next_state : state := Idle;
         signal message_buff : string(1 to 11);
         signal rx_message_buff : string(1 to 11);
-        signal received_data : STD_LOGIC_VECTOR(d_width-1 DOWNTO 0);	--data received
+		
+		signal prev_rx	: STD_LOGIC;
 
     begin
-        reset_n <= '0', '1' after 18 ns;
+        reset_n <= '0', '1' after 1000 ns;
 
         process begin
             wait for period/2;
@@ -50,11 +51,12 @@ architecture behav of user_logic is
             case current_state is
                 when Idle =>
                     if rising_edge(clock) then
-                        --if cnt > 100 then
+                        if cnt > 100 then
                             next_state <= Hello;
-                       -- else 
-                          --  next_state <= Idle;
-                      --  end if;
+						else 
+							next_state <= Idle;
+							cnt := cnt + 1;
+						end if;
                     end if;
                     
                 when Hello =>
@@ -66,40 +68,41 @@ architecture behav of user_logic is
                 when Send_hello =>
                     if rising_edge(clock) then
                         if message_len = 0 then
-                      --      if tx_busy = '0' then 
+							if tx_busy = '0' then 
                                 tx_data <= "00000000";
+								tx_ena <= '1' , '0' after 100 ns;
+								cnt := 1;
                                 next_state <= Receiving_1;
-                      --      else 
-                       --     next_state <= Send_hello;
-                        else
+							else 
+								next_state <= Send_hello;
+							end if;
+
+                        elsif tx_busy = '0' then
                             tx_data <= std_logic_vector(to_unsigned(character'pos(message_buff(message_len)),8));
-                            tx_ena <= '1';
+                            tx_ena <= '1','0' after 100 ns;
                             message_len := message_len - 1;
                             next_state <= Send_hello;
+                        else
+                            next_state <= Send_hello;
                         end if;
-
-                      --  elsif tx_busy = '0' then                            
-                            -- tx_data <= std_logic_vector(to_unsigned(character'pos(message_buff(message_len)),8));
-                            -- tx_ena <= '1';
-                            -- message_len := message_len - 1;
-                            -- next_state <= Send_hello;
-                        -- else 
-                        --     tx_ena <= '0';
-                        --     next_state <= Send_hello;
-                        -- end if;
                     end if;
 
                 when Receiving_1 =>
-                    if falling_edge(rx_busy) then 
-                        received_data <= rx_data;
-                        if received_data = "00000000" then
-                            next_state <= Temperature;
-                        else
-                            rx_message_buff <= rx_message_buff & character'val(to_integer(unsigned(received_data))); --????    
-                            next_state <= Receiving_1;
-                        end if;
-                    end if;
-
+					if rising_edge(clock) then
+						prev_rx <= rx_busy;
+						if prev_rx = '1' and rx_busy = '0' then
+							if rx_data = "00000000" then
+								for I in cnt to 11 loop
+										rx_message_buff(I) <= ' ';
+								end loop;
+								next_state <= Temperature;
+							else
+								rx_message_buff(cnt) <= character'val(to_integer(unsigned(rx_data))); --????    
+								cnt := cnt + 1;
+								next_state <= Receiving_1;
+							end if;
+						end if;
+					end if;
                 when Temperature =>
                     if rising_edge(clock) then
                         message_buff <= "erutarepmeT";
@@ -110,35 +113,41 @@ architecture behav of user_logic is
                 when Send_temp =>
                     if rising_edge(clock) then
                         if message_len = 0 then
-                            if tx_busy = '0' then 
+							if tx_busy = '0' then 
                                 tx_data <= "00000000";
+								tx_ena <= '1' , '0' after 100 ns;
+								cnt := 1;
                                 next_state <= Receiving_2;
-                            else 
-                            next_state <= Send_temp;
-                            end if;
-                            
+							else 
+								next_state <= Send_temp;
+							end if;
+
                         elsif tx_busy = '0' then
-                            --tx_data <= std_logic_vector(to_unsigned(message_buff(message_len),8));
                             tx_data <= std_logic_vector(to_unsigned(character'pos(message_buff(message_len)),8));
-                            tx_ena <= '1';
+                            tx_ena <= '1','0' after 100 ns;
                             message_len := message_len - 1;
                             next_state <= Send_temp;
-                        else 
-                            tx_ena <= '0';
+                        else
                             next_state <= Send_temp;
                         end if;
                     end if;
 
                 when Receiving_2 =>
-                    if falling_edge(rx_busy) then 
-                        received_data <= rx_data;
-                        if received_data = "00000000" then
-                            next_state <= Bye;
-                        else
-                            rx_message_buff <= rx_message_buff & character'val(to_integer(unsigned(received_data))); --????    
-                            next_state <= Receiving_2;
-                        end if;
-                    end if;
+                    if rising_edge(clock) then
+						prev_rx <= rx_busy;
+						if prev_rx = '1' and rx_busy = '0' then
+							if rx_data = "00000000" then
+								for I in cnt to 11 loop
+										rx_message_buff(I) <= ' ';
+								end loop;
+								next_state <= Bye;
+							else
+								rx_message_buff(cnt) <= character'val(to_integer(unsigned(rx_data))); --????    
+								cnt := cnt + 1;
+								next_state <= Receiving_2;
+							end if;
+						end if;
+					end if;
 
                 when Bye =>
                     if rising_edge(clock) then
@@ -150,43 +159,43 @@ architecture behav of user_logic is
                 when Send_bye =>
                     if rising_edge(clock) then
                         if message_len = 0 then
-                            if tx_busy = '0' then 
+							if tx_busy = '0' then 
                                 tx_data <= "00000000";
+								tx_ena <= '1' , '0' after 100 ns;
+								cnt := 1;
                                 next_state <= Receiving_3;
-                            else 
-                            next_state <= Send_bye;
-                            end if;
-                            
+							else 
+								next_state <= Send_bye;
+							end if;
+
                         elsif tx_busy = '0' then
-                            --tx_data <= std_logic_vector(to_unsigned(message_buff(message_len),8));
                             tx_data <= std_logic_vector(to_unsigned(character'pos(message_buff(message_len)),8));
-                            tx_ena <= '1';
+                            tx_ena <= '1','0' after 100 ns;
                             message_len := message_len - 1;
                             next_state <= Send_bye;
-                        else 
-                            tx_ena <= '0';
+                        else
                             next_state <= Send_bye;
                         end if;
                     end if;
                 
                 when Receiving_3 =>
-                if falling_edge(rx_busy) then 
-                    received_data <= rx_data;
-                    if received_data = "00000000" then
-                        next_state <= Idle;
-                    else
-                        rx_message_buff <= rx_message_buff & character'val(to_integer(unsigned(received_data))); --????    
-                        next_state <= Receiving_3;
-                    end if;
-                end if;
+					if rising_edge(clock) then
+						prev_rx <= rx_busy;
+						if prev_rx = '1' and rx_busy = '0' then
+							if rx_data = "00000000" then
+								for I in cnt to 11 loop
+										rx_message_buff(I) <= ' ';
+								end loop;
+								next_state <= Idle;
+							else
+								rx_message_buff(cnt) <= character'val(to_integer(unsigned(rx_data))); --????    
+								cnt := cnt + 1;
+								next_state <= Receiving_3;
+							end if;
+						end if;
+					end if;
 
             end case;
-
-            if current_state = Send_bye or current_state = Send_temp or current_state =  Send_hello then
-                tx_ena <= '1';
-            else 
-                tx_ena <= '0';
-            end if;
     end process ; -- transmit
 
     machine_state : process( clock )

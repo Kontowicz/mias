@@ -4,7 +4,7 @@ use work.all;
 
 entity tb is
     port(
-        rx_port : out std_logic 
+        tx_port : out std_logic 
     );
     
 end tb ;
@@ -23,7 +23,7 @@ architecture arch of tb is
     signal tx : std_logic;
 
     begin   
-        rx_port <= rx;
+        tx_port <= tx;
 
         user_logic_dev : entity work.user_logic generic map(
             N => 8,
@@ -50,11 +50,11 @@ architecture arch of tb is
 
             tx_ena => tx_enable,
             tx_data	=> tx_data_s,
-            --tx_busy => rx_busy,
+            tx_busy => tx_busy,
 
-            tx => rx,
+            tx => tx,
 
-            rx => tx,
+            rx => rx,
 
             rx_busy => rx_busy,
             rx_error => rx_error,
