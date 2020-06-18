@@ -1,6 +1,0 @@
-vcom user_logic.vhd uart.vhd cb.vhd tb.vhd -2008
-vsim work.tb
-add wave -position insertpoint sim:/tb/cb_dev/*
-add wave -position insertpoint sim:/tb/user_logic_dev/*
-add wave *
-run 20 ms

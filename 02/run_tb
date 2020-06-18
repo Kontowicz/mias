@@ -1,5 +1,0 @@
-
-vcom i2c_master.vhd pmod_temp_sensor_tcn75a.vhd tb.vhd TCN75A.vhd temp_sensor_pmod.vhd user_logic.vhd
-vsim work.tb
-add wave *
-run 200 ms
